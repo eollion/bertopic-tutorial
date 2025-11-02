@@ -20,7 +20,7 @@ When working with a new corpus, the first step is to explore the documents in or
 >
 > **Natural language processing (NLP)** is a subfield of computer science that analyses textual data. Main NLP tasks are text generation (like chatGPT), text classification, or topic modelling.
 
-![Figure 1: Topic Modelling **XXX**](assets/topic_modelling_scheme.png)
+![Topic Modelling **XXX**](assets/topic_modelling_scheme.png){#fig-schema}
 
 Until recently, topic modelling techniques — and natural language processing (NLP) in general — heavily relied on word counts. Among other limits, word counts do not take into account the context in which a word is used, thus failing to grasp the complexity of the human language.
 To tackle this limit, researchers developed transformer models that generate richer and denser representations; these representations are vectors called embeddings. BERTopic is the new topic model that leverages transformer techniques to generate coherent topics based on the semantic similarity of texts. BERTopic has already proven to be useful in social science contexts. _For instance, Bizel-Bizellot et al. (2024) used it to identify the main circumstances of infection with COVID-19 based on survey-free-text answers._
@@ -142,7 +142,7 @@ At the end of the tutorial you'll be able to generate a detailed topic analysis 
 : Table X: **XXX** {tbl-colwidths="[10, 20, 20,50]"}
 
 
-![Figure 2: XXX](./assets/2d_plot.png)
+![XXX](./assets/tuto_2d_plot.png){#fig-2d-plot-intro}
 
 ## What happens under the hood?
 
@@ -229,7 +229,7 @@ In BERTopic, they use an alternative called **c-TF-IDF**. This transformation ra
 
 We described each step of the pipeline that is illustrated in the documentation.
 
-![Figure 3: XXX](./assets/bertopic-general-en.svg)
+![XXX](./assets/bertopic-general-en.svg){#fig-general-illustration}
 
 To sum it up we have:
 
@@ -364,7 +364,7 @@ df_stratified.to_csv("./data/theses-soutenues-curated-stratified.csv", index=Fal
 
 The resulting stratified DataFrame contains 6500 rows.
 
-## Create a BERTopic instance, fit and transform
+## Create a BERTopic instance, fit and transform {#sec-create-instance}
 
 To create a `topic_model` object we need to use the `BERTopic` constructor and define some parameters. For now, we will not change the default parameters of the clustering model (`hdbscan_model`) or the dimension reduction model (`umap_model`). We will however define the language of the corpus as well as the vectorizer model in order to remove all stopwords and retrieve meaningful topics. Then, one must use the `fit` method to fit the topic model to the corpus.
 
@@ -416,7 +416,8 @@ topics, probabilities = topic_model.transform(documents=docs, embeddings=embeddi
 And to explore the topics we can call the `get_topics_info` method that will return a table with the keywords, representative documents and the number of documents in each topic: 
 
 ```python 
-topic_model.get_topic_info()
+topic_info = topic_model.get_topic_info()
+topic_info
 ```
 
 |     |   Topic |   Count | Representation                                                                                                          |
@@ -492,7 +493,7 @@ The first thing we want to visualise is the space of the embeddings reduced to 2
 )
 ```
 
-![Figure **XXX**](./assets/tuto_2d_plot.png)
+![**XXX**](./assets/tuto_2d_plot.png){#fig-2d-plot}
 
 On this graph only displaying the 4 top topics, we can see that the cluster are large and dense. We can see that the "1_mechanical_numerical_behavior" and the "3_flow_numerical_fluid" are close, as expected whereas "0_literary_writing_art" and "2_cells_cancer_tumor" are further apart in separate directions.
 
@@ -521,7 +522,7 @@ topic_model.visualize_barchart(
 )
 ```
 
-![Figure **XXX**](./assets/tuto_top_n_words.png)
+![**XXX**](./assets/tuto_top_n_words.png){#fig-top-n-words}
 
 Take the topic n°5, we can see keywords like "urban", "land", "city", "local", "public" and "ecological". These keywords make sense together and we can imagine theses discussing urban planning at different scales and under different constraints.
 
@@ -533,7 +534,7 @@ The clustering algorithm HDBSCAN is hierarchical, meaning that on top of finding
 fig = topic_model.visualize_hierarchy()
 ```
 
-![Figure **XXX**](./assets/tuto_hierarchical.png)
+![Figure **XXX**](./assets/tuto_hierarchical.png){#fig-hierarchical-plot}
 
 At the very top of this graph, we can see the green branches related to laws and international rights, very close to contract legislation. This is a good sign that these three branches merge together and that we dont find legislation-related keywords anywhere else in the three.
 
@@ -541,9 +542,140 @@ At the very top of this graph, we can see the green branches related to laws and
 
 If you have additional tags for your dataset, such as categories or dates, you can very easily display your topic analysis in regard of these dimensions.
 
-In our case, we have OAI codes that 
+In our case, we have OAI codes that account for the field each thesis is in. Hence we can count the number
+
+```python
+# some theses are in multiple fields, 
+# the oai code is: 
+# ddc:XXX||ddc:YYY
+# for simplicity, we are going to keep the first field for each thesis
+first_oai = [oai_code[:7] for oai_code in ds["oai_set_specs"]]
+
+# Let's translate that to human language:
+oai_names = {
+    "ddc:300" : "Sciences sociales, sociologie, anthropologie",
+    "ddc:340" : "Droit",
+    "ddc:004" : "Informatique",
+    "ddc:570" : "Sciences de la vie, biologie, biochimie",
+    "ddc:540" : "Chimie, minéralogie, cristallographie",
+    "ddc:620" : "Sciences de l'ingénieur",
+    "ddc:550" : "Sciences de la terre",
+    "ddc:530" : "Physique",
+    "ddc:510" : "Mathématiques",
+    "ddc:610" : "Médecine et santé"
+}
+def retrieve_name(oai_code):
+    if oai_code in oai_names:
+        return oai_names[oai_code]
+    else : 
+		return "Autre"
+
+first_oai_names = [retrieve_name(oai_code) for oai_code in first_oai]
+
+topics_per_class = topic_model.topics_per_class(docs, classes=first_oai_names)
+topic_model.visualize_topics_per_class(
+    topics_per_class,
+    topics = [0, 1, 2, 3]
+)
+``` 
+
+![**XXX**](./assets/tuto_topics_per_class.png){#fig-topic-per-class}
+
+In this figure, we can start checking that documents are associated to the right topic. For instance, it is coherent to see that documents of the topic '1_mechanical_numerical_behavior' are found in theses in Physics, Engineering Sciences; and that theses of the topic '2_cells_cancer_tumor' are found in theses in Health and Medicine as well as in Biology and Biochemistry.
+
+If you want to visualise your topics on a temporal axis, you can use the the `visualize_topics_over_time` method.
+
+```python
+year = [int(float(year_as_string)) for year_as_string in ds["year"]]
+topics_over_time = topic_model.topics_over_time(docs = docs, timestamps=year)
+topic_model.visualize_topics_over_time(topics_over_time, topics = [0,1,2,3])
+```
+
+![**XXX**](./assets/tuto_temporal_axis.png){#fig-temporal-axis}
 
 ## Use the hierarchical clustering to reduce the number of topics
+
+:::{.callout-warning}
+
+Need further research, the reduce to n topic method does not use the hierarchical clustering of hdbscan, which is odd
+
+It seems like hdbscan is not chose to perform 
+
+il y a une divergence entre la manière de visualiser la hierarchie et d'agréger les sujets ce qui fait que le lien est pas évident évident: 
+
+- visualize_hierarchy: uses ward linkage on c-tf-idf 
+- reduce_to_n_topics : uses average linkage on embeddings
+
+😬 <- me, ie lost
+
+:::
+
+In the previous section we introduced the idea that the clustering was hierarchical, meaning that we can easily aggregate small clusters into bigger ones. **Du coup askip, non c'est pas l'idée**
+<br/>
+In our case, with more than 100 topics, it is difficult to have a general idea of the main latent themes in the corpus. Looking back to the @fig-hierarchical-plot we can identify seven large branches we could reduce our topic model to.
+
+```python
+topic_model.reduce_topics(docs = docs, nr_topics=7 + 1) #Add one to account for the noise
+#Retrieve the updated topics and probabilities
+topics_reduced, probabilities_reduced = topic_model.topics_, topic_model.probabilities_
+```
+
+Then check the new representations like in the section @sec-create-instance.
+
+```python
+topic_info_reduced = topic_model.get_topic_info()
+topic_info_reduced
+```
+
+|   Count | Name                                    | Representation                                                                                                                  |
+|---:|:---|:---|
+|    2715 | -1_study_thesis_model_based             | ['study', 'thesis', 'model', 'based', 'analysis', 'data', 'approach', 'process', 'development', 'properties']                   |
+|    1037 | 0_study_analysis_social_thesis          | ['study', 'analysis', 'social', 'thesis', 'french', 'political', 'century', 'approach', 'time', 'history']                      |
+|     795 | 1_cells_cell_expression_role            | ['cells', 'cell', 'expression', 'role', 'species', 'study', 'patients', 'protein', 'cancer', 'involved']                        |
+|     707 | 2_model_numerical_study_method          | ['model', 'numerical', 'study', 'method', 'experimental', 'thesis', 'flow', 'based', 'models', 'properties']                    |
+|     634 | 3_data_thesis_systems_model             | ['data', 'thesis', 'systems', 'model', 'propose', 'based', 'approach', 'proposed', 'network', 'time']                           |
+|     464 | 4_properties_magnetic_surface_synthesis | ['properties', 'magnetic', 'surface', 'synthesis', 'materials', 'studied', 'study', 'temperature', 'nanoparticles', 'reaction'] |
+|     135 | 5_law_legal_international_rights        | ['law', 'legal', 'international', 'rights', 'european', 'monetary', 'financial', 'constitutional', 'policy', 'economic']        |
+|      13 | 6_detection_biosensor_biosensors_based  | ['detection', 'biosensor', 'biosensors', 'based', 'dna', 'sers', 'surface', 'splitaptamer', 'spr', 'sensor']                    |
+
+
+: Table X: **XXX** {tbl-colwidths="[10, 30, 60]" #tbl-topics-reduced}
+
+Similarly to before, the noise topic contains very generic keywords. As for the rest, we can identify seven [^10] main latent topics :
+
+- Social Sciences
+- Medicine and Health
+- Engineering Sciences, Experimentation and Simulation
+- Data analysis and Mathematics
+- Physics 
+- Law, Finance and Policies
+- Biochemisty and sensors
+ 
+The topics are very general and give us key insights about our corpus. 
+<br>
+It is important to notice that the very detailed analysis was useful to understand the more general one. For instance, the keywords for the second main topic are too general, but because we analysed our documents in details, we know that this topic is the result of merging "1_mechanical_numerical_behavior" and "3_flow_numerical_fluid", allowing us to name this topic "Engineering Sciences, Experimentation and Simulation".
+
+After reducing outliers, here is the distribution of topics across all out documents : 
+
+|                                                      |   Topic |   Count | Proportion   |
+|:-----------------------------------------------------|--------:|--------:|:-------------|
+| Social Sciences                                      |       0 |    1749 | 27 %         |
+| Medicine and Health                                  |       1 |    1328 | 20 %         |
+| Engineering Sciences, Experimentation and Simulation |       2 |    1106 | 17 %         |
+| Data analysis and Mathematics                        |       3 |    1073 | 17 %         |
+| Physics                                              |       4 |     803 | 12 %         |
+| Law, Finance and Policies                            |       5 |     410 | 6 %          |
+| Biochemisty and sensors                              |       6 |      31 | 0 %          |
+
+: Table X: **XXX** {tbl-colwidths="[50, 10, 20, 20]" #tbl-topics-reduced-stats}
+
+Finally, the 7th topic still seem very specific, even after reducing outliers, there are only 31 documents in this topic.
+
+:::{.callout-warning}
+
+Careful though, even if the previous results let us think the topic model was coherent, we have not evaluated it yet.
+
+:::
 
 ## Tune parameters
 
@@ -587,6 +719,36 @@ The main HDBSCAN parameters are:
 :::
 
 ## Discussion on evaluating a topic model
+
+Topic model evaluation is an active domain of research that would be impossible to sum up in this tutorial. Instead we propose an overview of the methods that exist and how to quickly tell if your topic model can be used or need to be refined.
+<br/>
+In short: quantitative methods are impractical and 
+
+### Qualitative evaluation
+
+### Quantitative evaluation
+
+In this section we introduce different metrics that can be used to evaluate your topic model. However, we mainly included it to warn you of the complexity behind evaluating a topic model and that there is no one-fit-all solution. 
+
+> First, choosing the coherence score by itself can have a large influence on the difference in performance you will find between models. For example, NPMI and UCI may each lead to quite different values. Second, the coherence score only tells a part of the story. Perhaps your purpose is more classification than having the most coherent words or perhaps you want as diverse topics as possible. These use cases require vastly different evaluation metrics to be used.
+>
+> Response to "How to evaluate the performance of the model?" by Maarten Grootendorst [source](https://github.com/MaartenGr/BERTopic/issues/437)
+
+#### Evaluate the clustering model
+
+One could choose to focus on evaluating the clustering model to tune the HDBSCAN and UMAP parameters. There exist many metrics for evaluating clustering models that you can find on the [scikit-learn website](https://scikit-learn.org/stable/modules/clustering.html#clustering-performance-evaluation). However, amid the 9 presented, 4 require a ground truth that we don't have[^11], 3 are ill-suited to HDBSCAN clustering[^12] and the two last are good metrics to be optimised.
+
+Hence, we need to find metrics that are relevant to the density-based clustering models such as the DBCV Index (Moulavi et al., 2014)[^13] or the DISCO index (Beer et al., 2025).
+
+In our experience, optimising these metrics result in a sub-optimal solutions as illustrated bellow.
+
+_figure to come_
+
+We don't really recommend using clustering metrics to evaluate your topic model.
+
+#### Evaluate the topic model 
+
+Another set of metrics rely on 
 
 # Discussion on good practices
 
@@ -665,3 +827,11 @@ Saving the instance is a good practice, as we will see below, when reducing the 
 [^8]: More information on [stratification in Pandas](https://proclusacademy.com/blog/stratified_sampling_pandas/)
 
 [^9]: See the [techy notes](./techy-notes.qmd#reduce-outliers-strategies) for more information on the strategies used to reduce the outliers.
+
+[^10]: We have seven topics because we asked the topic model to reduce the number of topics to seven.
+
+[^11]: Rand index, Mutual Information based scores (NMY and AMI), Homogeneity, completeness and V-measure and Fowlkes-Mallows scores.
+
+[^12]: Silhouette Coefficient, Calinski-Harabasz index and Davies-Bouldin Index. All are designed to evaluate centroïd-based clustering models (vs density-based clustering models such as HDBSCAN) such as k-Means. This means that the score is generally higher for convex clusters (round-shaped) which we don't necessarily want.
+
+[^13]: The index was designed by the same team that designed HDBSCAN (Campello et al., 2013)
