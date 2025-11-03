@@ -13,7 +13,7 @@ Ne pas se focaliser que sur l'exploratoire
 
 :::
 
-When working with a new corpus, the first step is to explore the documents in order to gain a sense of what they contain and what they don't. This necessary step of exploration can be done by hand, reading each document, but when dealing with large corpora, this task is almost impossible; hence, for quite some time now, social scientists have used **topic modelling** techniques to quickly extract the main themes in their corpus (Asmussen & Møller, 2019).
+What are the main issues adressed in a set of documents ? Are those documents similar or discussing different issues ? What is the most important topic ? Delineating the main topics in a set of documents is a common task in social sciences. It is especially true when when working with a new corpus. Of course, identifying the topics can be done by hand, reading each document. But when dealing with large corpora, this task is almost impossible; hence, for quite some time now, social scientists have used **topic modelling** techniques to quickly extract the main themes in their corpus (Asmussen & Møller, 2019), either to explore them or to attribute a label to each document to conduct further analysis.
 
 > **Topic modelling** is a natural language processing task that extracts latent topics structuring a corpora.<br/>
 > _For instance, Jockers & Mimno (2013) extracted broad themes in the English literature from the 19th century._ 
@@ -22,31 +22,30 @@ When working with a new corpus, the first step is to explore the documents in or
 
 ![Topic Modelling **XXX**](assets/topic_modelling_scheme.png){#fig-schema}
 
-Until recently, topic modelling techniques — and natural language processing (NLP) in general — heavily relied on word counts. Among other limits, word counts do not take into account the context in which a word is used, thus failing to grasp the complexity of the human language.
-To tackle this limit, researchers developed transformer models that generate richer and denser representations; these representations are vectors called embeddings. BERTopic is the new topic model that leverages transformer techniques to generate coherent topics based on the semantic similarity of texts. BERTopic has already proven to be useful in social science contexts. _For instance, Bizel-Bizellot et al. (2024) used it to identify the main circumstances of infection with COVID-19 based on survey-free-text answers._
+Until recently, topic modelling techniques — and natural language processing (NLP) in general — heavily relied on word counts, especially bag-of-words approaches. Among other limits, those approaches do not take into account the context in which a word is used, as the order of the words, thus failing to grasp the complexity of the human language.
 
-BERTopic is a brilliant tool, but it requires time to master. In this tutorial, we break down the whole architecture for someone with a social science background to understand the underlying technology. We will demonstrate how to use and tune a topic model to your needs. For the sake of the demonstration, we will use the database of all the theses defended between 2010 and 2022 in France and create a topic model to describe what keeps French PhD students busy!
+To tackle this limit, researchers developed transformations that generate richer and denser representations based on deep learning models. Those models take the text as an entry and generate a vector representation called embeddings. BERTopic is a topic model tool designed for Python that leverages transformer models to generate coherent topics based on the semantic similarity of texts. Since its inception in XXXX, BERTopic has already proven to be useful in various research across social sciences. _For instance, Bizel-Bizellot et al. (2024) used it to identify the main circumstances of infection with COVID-19 based on survey-free-text answers + YOU CAN ADD A SUPP EXAMPLE._
+
+BERTopic is a brilliant tool, but it opens a lot of possibilities and can take some time to master. In this tutorial, we focus on its general philosophy and how to use it in a social science prospect. We will demonstrate how to start with a text corpus and create a topic model that makes sense. As a use case, we will use the database of all the theses defended between 2010 and 2022 in France and create a topic model to describe what keeps French PhD students busy!
+
 By the end of this tutorial, you should be able to:
 
 - Get an idea of what you can do with topic modelling in social science
 - Set up a topic model on your data and make sense of the results
 - Understand each step of the BERTopic pipeline and customise it
 
-We conclude this tutorial with a discussion about the evaluation of topic modelling and good practices for reproducibility.
+We conclude this tutorial with a discussion about the evaluation of topic modelling and good practices for reproducibility. Of course, at the end of the day, what is a good topic model is a subjective question and depends on your use case and your expectations.
 
 # Python, Machine Learning and NLP prerequisites
 
-## Python
+We don't assume that you have any knowledge about NLP and try our best to explain every step in an agnostic manner. We also provide numerous references if you want to dig deeper.
 
-We won't cover how to install the coding environment. For this, please refer to **XXX**.
-We assume that:
+Nevertheless, you need to have some notions of Python. If you need to refresh your Python skills, you can use [Lino Galina courses](https://pythonds.linogaliana.fr/en/). We assume that:
 
-- you have a working environment
-- you are able to install packages
+- you have a working environment (you can use online tools as [Onyxia](datalab.sspcloud.fr)) where you can install packages
 - you know the basic syntax of Python (functions, variables, if-statements, for loops) and you're comfortable enough with Pandas to load your documents and proceed to simple manipulations such as creating, dropping and renaming columns and rows.
 
-I use python 3.12
-Packages to install:
+In this tutorial, we use python 3.12, and you can install the packages we will need with :
 
 ```python
 pip install -U bertopic pandas scikit-learn datasets plotly kaleido stopwordsiso nbformat ipykernel
@@ -54,13 +53,11 @@ pip install -U bertopic pandas scikit-learn datasets plotly kaleido stopwordsiso
 
 :::{.callout-note}
 
-We provide a detailed requirement file that should work for macs and linux
+We provide a detailed requirement file that should work for Linux and MacOS.
 
 :::
 
-## Machine Learning and NLP
 
-We don't assume that you have any knowledge about NLP and try our best to explain every step in an agnostic manner. We also provide numerous references if you want to dig deeper.
 
 # Material
 
@@ -70,12 +67,13 @@ The tutorial comes with some material uploaded on [Zenodo](https://doi.org/10.5
 - The original dataset (which can be downloaded [here](https://www.data.gouv.fr/datasets/theses-soutenues-en-france-depuis-1985/)).
 - A clean dataset with the cleaning code.
 
-# The BERTopic pipeline
+# Understanding BERTopic philosophy
 
-## What we expect
+## The BERTopic pipeline
 
-The BERTopic pipeline takes a list of text documents and returns meaningful topics as well as a mapping from the text documents to the said topics. The goal is to retrieve semantically coherent clusters and describe your corpus with different topics and keywords.
-Here is a basic usage of BERTopic:
+The BERTopic pipeline takes a list of text documents and returns meaningful topics as well as a mapping from the text documents to the said topics. The goal is to be able to gather documents that are semantically close in clusters and then describe those topics to be able to interprete them. Once you have a set of topics, you can come back to the corpus to describe its composition. 
+
+Here is a basic usage of BERTopic to get your first topics decomposition :
 
 ```python
 from bertopic import BERTopic
@@ -89,8 +87,10 @@ documents = [
 
 # Create a BERTopic object
 topic_model = BERTopic()
+
 # Fit your model to your documents
 topic_model.fit(documents)
+
 # Predict the topics and probabilities
 topic, probabilities = topic_model.transform(documents)
 
@@ -100,16 +100,16 @@ topic, probabilities = topic_model.fit_transform(documents)
 
 :::{.callout-note}
 
-The `model.fit`, `model.transform` is a common syntax in machine learning first introduced by Scikit-learn, one of the first and most complete machine learning library in Python
+The methods  `fit`, `transform`, and `fit_transform` are a common syntax in machine learning systematized by Scikit-learn, one of the first and most complete machine learning library in Python. A vanilla model is fitted on the data (parameters are estimated), and then the model is used to make predictions on new data.
 
  **(à vérifier)**
 
 :::
 
-The `topic` variable is a list containing integers: for each document, the integer represents the topic/group it belongs to. In our case, `topic = [0, 0, 1]` as the first 2 documents talk about cats, whereas the last document is about the Empire State Building.
+The transformation produces two outputs: the `topic` variable is a list containing integers: for each document, the integer represents the topic/group it belongs to. In our case, `topic = [0, 0, 1]` as the first 2 documents talk about cats, whereas the last document is about the Empire State Building.
 The `probabilities` variable is a list of floats: for each document, the float represents how close it is to the topic.
 
-Then we can retrieve topic information that will return keywords that best represent our corpus:
+The fitting of the model produces different informations. We can then retrieve topic information that will return keywords that best represent our corpus:
 
 ```python
 topic_info = topic_model.get_topic_info()
@@ -124,15 +124,13 @@ The `topic_info` variable is a table like this :
 
 : Table X: **XXX** {tbl-colwidths="[10, 10, 20, 20,40]"}
 
-The `Topic` column lists the topic IDs, the `Count` column lists the number of element there are in each topic, the `Name` column is a summary of topic ID and keywords — listed in the `Representation` column) and finally the `Representative_Docs` lists example of documents that are representatives of the topic.
+The `Topic` column lists the topic IDs, the `Count` column lists the number of element there are in each topic, the `Name` column is a summary of topic ID and keywords — listed in the `Representation` column and finally the `Representative_Docs` lists example of documents that are representatives of the topic.
 
-:::{.callout-warning}
 
-This example would not run because there are not enough documents!
+In reality, this example would not run because there are not enough documents! So let's have a look of what we can expect on a real dataset of the abstracts of all the theses defended in France since 2010.
 
-:::
+Here, we are at the end of the process : parameters have been carefully chosen, the pipeline has been fitted and we were able to get a easly interpretable projection of the topics.
 
-At the end of the tutorial you'll be able to generate a detailed topic analysis of the thesis defended in France. Here is a preview of the results:
 
 | Topic | Count | Name       | Representation |
 | ----- | ----- | ---------- | -------------- |
@@ -144,17 +142,23 @@ At the end of the tutorial you'll be able to generate a detailed topic analysis 
 
 ![XXX](./assets/tuto_2d_plot.png){#fig-2d-plot-intro}
 
-## What happens under the hood?
+Now, we need to understand how to get there.
 
-Under the hood, BERTopic does the following:
+## Breaking down the process
 
-- Generates mathematical representation that will capture the semantic properties of each document — the embeddings.
-- Based on the embeddings, it will split the documents into groups that are semantically close (this is called clustering). The hope is that these groups represent latent topics of the corpus.
-- For each topic, it will retrieve keywords that best describe the specificity of each topic.
+Under the hood, BERTopic does three main steps :
+
+- Generates a digital representation that captures the semantic properties of each document — the embeddings.
+- Based on the embeddings, it will identify groups of documents that are semantically close (this is called clustering). The hope is that these groups represent latent topics of the corpus.
+- For each identified topic, it will retrieve keywords that best describe the specificity of each topic.
+
+If you look in the documentation, those three steps are composed of technical blocks, each of them connected to a data treatment.
+
+![XXX](./assets/bertopic-general-en.svg){#fig-general-illustration}
 
 ### How to generate the embeddings?
 
-To generate the embeddings we use encoder models. Encoder models are a type of transformer whose job is to encapsulate the semantic of textual data. A good example of encoder is the BERT model and all it's successors like RoBERTa, DeBERTa ... For generating embeddings, BERTopic uses **SBERT**. Encoder models have a limit on the number of token (parts of words) that they can embed, this is called the **context window size**. For smaller models, the context window size is of about 500 tokens like for BERT and larger models like ModernBERT have a context window size of 8,000 tokens.
+To generate the embeddings we use encoder models. Encoder models are a type of pre-trained transformer models whose job is to encapsulate the semantic of textual data. A good example of encoder is the BERT model and all it's successors like RoBERTa, DeBERTa ... For generating embeddings, BERTopic uses **SBERT**. Encoder models have a limit on the number of token (parts of words) that they can embed, this is called the **context window size**. For smaller models, the context window size is of about 500 tokens (200 words on average) like for BERT and larger models like ModernBERT have a context window size of 8,000 tokens.
 
 The embeddings — ie the generated vectors, contain hundreds of dimensions (for instance, the dimension of BERT's embeddings is 512). Clustering algorithms work poorly with this many dimensions[^2] so we need to reduce the dimensionality of the embedding space (typically between 2 and 10). To reduce the dimensionality, the BERTopic pipeline uses the **UMAP** algorithm for it's ability to grasp local and global structures (McInnes et al., 2018)[^1]. This mean that, despite moving from several hundreds of dimension to only a couple, documents that are close together will stay close and distant ones will stay further apart. This is a critical step as we are heavily changing the structure of the data.
 
@@ -180,9 +184,9 @@ On UMAP:
 
 ### How to generate clusters
 
-To goal for the clustering algorithm is to create groups of documents that are semantically close. We are not certain that the output clusters will be topics, but we tune the BERTopic pipeline in order for the clusters to be representatives of topics that are latent in our corpus.
+To goal for the clustering algorithm is to create groups of documents that are semantically close. We are not certain that the output clusters will be "real" topics, but we tune the BERTopic pipeline in order for the clusters to be representatives of topics that are latent in our corpus.
 
-HDBSCAN was chosen for it's ability to detect cluster of various shape and density. HDBSCAN also allows for documents to be labeled as noise to primarily focus on dense and coherent groups.
+Different algorithms can be used for clustering. HDBSCAN was chosen for it's ability to detect clusters based on theire density. HDBSCAN also allows for documents to be labeled as noise to primarily focus on dense and coherent groups.
 
 :::{.callout-tip collapse="false" title="Learn more about clustering techniques and HDBSCAN"}
 
@@ -200,7 +204,10 @@ On HDBSCAN:
 
 ### How to retrieve relevant keywords for each topic
 
-Once we have created groups of documents, we need to create a meaningful representation with keywords. To do that, we come back to the text document and use word-count-based techniques that will count the number of occurrences of each word[^5] in each document. However, there are plenty of words we don't want to count because they do not carry much semantic information (ex: "the", "I", "is", "but", ... ). These words are called stop words and are skipped.
+Once we have created groups of documents, we need to create a meaningful representation with keywords. The general idea in BERTopic is to identify keywords that best describe the specificity of each topic, compared to the others.
+
+To do that, it needs to come back to the text document and discompose it a the word level (which was not the case before, it was the token). It uses then word-count-based techniques that will count the number of occurrences of each word[^5] in each document. However, there are plenty of words we don't want to count because they do not carry much semantic information (ex: "the", "I", "is", "but", ... ). These words are called stop words and are skipped.
+
 To do so, we use the `CountVectorizer` object that will create a word x document matrix.
 
 :::{.callout-tip title="Example"}
@@ -222,14 +229,9 @@ The word x document matrix would be:
 
 :::
 
-The word x document matrix is never used as is and needs transformation to outline relevant words. The usual transformation is called TF-IDF. This transformation raises the score of words that appear often in a document and decreases the score of words that appear in many documents.
+The word x document matrix is never used as it is and needs transformation to outline relevant words. The usual transformation is called TF-IDF. This transformation raises the score of words that appear often in a document and decreases the score of words that appear in many documents.
 In BERTopic, they use an alternative called **c-TF-IDF**. This transformation raises the score of words that appear often in documents of the same group and decreases the score of words appearing in other groups. With this transformation, we retrieve words that make a group unique!
 
-## The whole pipeline together
-
-We described each step of the pipeline that is illustrated in the documentation.
-
-![XXX](./assets/bertopic-general-en.svg){#fig-general-illustration}
 
 To sum it up we have:
 
@@ -239,13 +241,15 @@ To sum it up we have:
 
 # Hands on with Python
 
+Now we understand broadly the BERTopic pipeline, let's see how to apply it to our dataset.
+
 ## Preprocessing your data
 
 As mentioned before, we will use the dataset listing all theses defended in France since 1985. The original dataset can be downloaded on [data.gouv.fr](https://www.data.gouv.fr/datasets/theses-soutenues-en-france-depuis-1985/). To avoid excessive pre-processing, we curated the dataset and uploaded it (with the code) on [Zenodo](https://doi.org/10.5281/zenodo.17416954).
 
 :::{.callout-note title="The curations are listed below:" collapse="false"}
 
-- select only thesis defended between 2010 and 2022 **propose an explanation**
+- select only thesis defended between 2010 and 2022, since information before have a lower quality
 - select thesis where both resumes in english and french exist, as well as the oai code (correspond to the field of the thesis, see [oai_codes.csv in the Zenodo project](https://doi.org/10.5281/zenodo.17416954)).
   (about 37% of the dataset remains, representing about 166k rows).
 - aggregate the topics (_sujets rameaux_) together under a single column (previously 53 (!!!))
@@ -255,7 +259,7 @@ As mentioned before, we will use the dataset listing all theses defended in Fran
 
 :::
  
-The preprocessing step is **the most important step**. Although we can tune the topic model towards meaningful clusters and representations, your corpus is your input and no model will generate good results out of poor inputs. We list a number of questions you need to consider and justify for your topic model to be relevant to your research:
+It is crucial to stress that the preprocessing step is **the most important step**. Although we can tune the topic model towards meaningful clusters and representations, your corpus is your input and no model will generate good results out of poor inputs. We list a number of questions you need to consider and justify for your topic model to be relevant:
 
 **Is my corpus homogenous enough ?**
 
@@ -333,7 +337,10 @@ df_raw.loc[:,["resumes.en.len", "resumes.fr.len"]].describe()
 
 : Table 2: **XXX** {tbl-colwidths="[20,40,40]"}
 
-With these statistics, we see that we can rule out using `sentence-transformers/all-MiniLM-L6-v2` because it's context window is too narrow. By keeping resumes between 1000 and 4000 characters (ie between 300 and 1300 tokens[^7]) we can keep most of the dataset (89%) while maintaining a reasonable computation time (about **XXX** mins).
+With these statistics, we see that we can rule out using `sentence-transformers/all-MiniLM-L6-v2` because it's context window is too narrow. By keeping resumes between 1000 and 4000 characters (ie between 300 and 1300 tokens[^7]) we can keep most of the dataset (89%) while maintaining a reasonable computation time.
+
+ES: WHAT IS logical_and ?
+
 
 ```python
 valid_index = logical_and.reduce([
@@ -346,7 +353,7 @@ valid_index = logical_and.reduce([
 df = df_raw.loc[valid_index,:]
 ```
 
-To avoid extra computation time, we are going to sample a small number of documents and stratify this sampling by the year of the defence[^8].
+Even if it is more interesting to process the complete dataset, it can be computationally expensive. To limit computation time at least for the exploratory steps, we are going to work on a sample of documents. To assure some representativeness, we stratify this sampling by the year of the defence[^8].
 
 ```python
 stratification_column = "year"
@@ -362,11 +369,11 @@ df_stratified = (
 df_stratified.to_csv("./data/theses-soutenues-curated-stratified.csv", index=False)
 ```
 
-The resulting stratified DataFrame contains 6500 rows.
+The resulting stratified table contains 6500 rows.
 
 ## Create a BERTopic instance, fit and transform {#sec-create-instance}
 
-To create a `topic_model` object we need to use the `BERTopic` constructor and define some parameters. For now, we will not change the default parameters of the clustering model (`hdbscan_model`) or the dimension reduction model (`umap_model`). We will however define the language of the corpus as well as the vectorizer model in order to remove all stopwords and retrieve meaningful topics. Then, one must use the `fit` method to fit the topic model to the corpus.
+To create a `topic_model` object we need to use a `BERTopic` object and define some parameters. For now, we will not change the default parameters of the clustering model (`hdbscan_model`) or the dimension reduction model (`umap_model`). We will however define the language of the corpus as well as the vectorizer model in order to remove all stopwords and retrieve meaningful topics. Then, one must use the `fit` method to fit the topic model to the corpus.
 
 <!-- TODO: choose models to display --> 
 
@@ -438,19 +445,20 @@ topic_info
 
 The "Representation" column provides the keywords for each topic. We can see that the keywords retrieved for the noise cluster are very generic: "study", "thesis", "model", "analysis", "approach" and do not convey any meaningful information other than the fact that all documents are academic documents.
 <br/>
+
 For each topic the model retrieves very specific keywords that fit together such as: 
 
 - 'mechanical', 'numerical', 'model', 'finite', 'element': this cluster may be grouping theses related to numerical simulation in mechanics using the finite element method.
 - ‘cells’, ‘cancer’, ‘tumor’, ‘immune’, ‘patients’: this cluster may be grouping theses related to cancer and cures.
 - ‘building’, ‘ventilation’, ‘heat’, ‘cooling’: this cluster may be grouping theses related to the thermodynamics of buildings.
 
-This is not a proof that our model is correct, for that we need to carry further investigation of each cluster, still this is a first step towards appreciating the quality of the topic model.
+This is not a proof that our model gave interesting results, for that we need to carry further investigation of each cluster, still this is a first step towards appreciating the quality of the topic model.
 
-In this table we can see that almost half of the documents are classified as noise (topic -1). This is a normal behaviour of the clustering algorithm as it focuses on dense clusters first. This way, the topic model creates representations that focus on few documents to retrieve very specific keywords. The other 104 topics contain between 10 and 200 documents each, which correspond to 0.1% to 3% of the corpus. 
-<br/>
+In this table we can see that almost half of the documents are classified as noise (topic -1). This is a normal behaviour of the clustering algorithm as it defines cluster based on spot of proximity between documents. This way, the topic model creates representations that focus on few documents to retrieve very specific keywords. The other 104 topics contain between 10 and 200 documents each, which correspond to 0.1% to 3% of the corpus. 
+
 It is worth noting that the topics the more documents in a cluster, the lower the topic index is. 
 
-It is possible to re-assign clusters to documents clustered as noise with the `reduce_outliers`[^9] method: 
+It is possible to re-assign clusters to documents clustered as noise with the `reduce_outliers`[^9] method, based on XXXX: 
 
 ```python
 topics_reduced = topic_model.reduce_outliers(
@@ -473,7 +481,7 @@ The topic model is not altered and keywords are not re-generated.
 
 Visualising your topics is central in topic modelling as **XXX**.
 
-We are going to cover some of the most basic and helpful visualisation.
+We are going to cover some of the most basic and helpful visualisations.
 
 ### 2D plot
 
@@ -510,7 +518,7 @@ This explains why some dots seem far away from their cluster.
 
 ### Visualise top words per topic
 
-The second helpful visualisation is to illustrate the top $n$ words that represent each topic and how representative they are of a given topic. It is a good way to analyse the coherence of each topic and get a sense of the documents inside a cluster.
+The second helpful visualisation is to illustrate the top $n$ words that represent each topic and how representative they are of a given topic. It is a good way to analyse the consistency of each topic and get a sense of the documents inside a cluster.
 
 ```python 
 topic_model.visualize_barchart(
@@ -720,8 +728,8 @@ The main HDBSCAN parameters are:
 
 ## Discussion on evaluating a topic model
 
-Topic model evaluation is an active domain of research that would be impossible to sum up in this tutorial. Instead we propose an overview of the methods that exist and how to quickly tell if your topic model can be used or need to be refined.
-<br/>
+Topic model evaluation is an active domain of research that goes beyond the scope of this tutorial. We propose an overview of the methods that exist and how to quickly tell if your topic model can be used or need to be refined.
+
 In short: quantitative methods are impractical and 
 
 ### Qualitative evaluation
