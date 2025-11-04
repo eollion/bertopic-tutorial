@@ -1,3 +1,13 @@
+# Curations of the original dataset
+
+- select only thesis defended between 2010 and 2022, since information before that time is of lower quality
+- select thesis where both resumes in english and french exist, as well as the oai code (correspond to the field of the thesis, see [oai_codes.csv in the Zenodo project](https://doi.org/10.5281/zenodo.17416954)).
+  (about 37% of the dataset remains, representing about 166k rows).
+- aggregate the topics (_sujets rameaux_) together under a single column (previously 53 (!!!))
+- check that the provided resume under the english column is written in english, and the resumes under the french column are written in french. If the english version is in the french column and vice-versa, swap them.
+- Finally, only select the rows where the resumes in english are in english and the resumes in french are in french. (36% of the original dataset, representing about 164k rows)
+- Add an index to the dataset
+
 # Reduce outliers strategies
 When using HDBSCAN, DBSCAN, or OPTICS, a number of outlier documents might be created that do not fall within any of the created topics. These are labeled as -1. This function allows the user to match outlier documents with their nearest topic using one of the following strategies using the strategy parameter: * "probabilities" This uses the soft-clustering as performed by HDBSCAN to find the best matching topic for each outlier document. To use this, make sure to calculate the probabilities beforehand by instantiating BERTopic with calculate_probabilities=True. * "distributions" Use the topic distributions, as calculated with .approximate_distribution to find the most frequent topic in each outlier document. You can use the distributions_params variable to tweak the parameters of .approximate_distribution. * "c-tf-idf" Calculate the c-TF-IDF representation for each outlier document and find the best matching c-TF-IDF topic representation using cosine similarity. * "embeddings" Using the embeddings of each outlier documents, find the best matching topic embedding using cosine similarity.
 
