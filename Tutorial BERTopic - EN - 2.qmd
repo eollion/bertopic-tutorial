@@ -14,6 +14,7 @@ Ne pas se focaliser que sur l'exploratoire
 Need to rerun it all and double check comments
 
 :::
+# Introduction 
 
 What are the main issues adressed in a set of documents ? Are those documents similar or discussing different issues ? What is the most important topic ? Delineating the main topics in a set of documents is a common task in social sciences; especially when working with a new corpus. Of course, identifying the topics can be done by hand, reading each document. But when dealing with large corpora, this task is almost impossible; hence, for quite some time now, social scientists have used **topic modelling** techniques to quickly extract the main themes in their corpus (Asmussen & Møller, 2019), either to explore them or to attribute a label to each document to conduct further analysis.
 
@@ -38,7 +39,7 @@ By the end of this tutorial, you should be able to:
 
 We conclude this tutorial with a discussion about the evaluation of topic modelling and good practices for reproducibility.
 
-# Python, Machine Learning and NLP prerequisites
+**Python, Machine Learning and NLP prerequisites**
 
 We don't assume that you have any knowledge about NLP and try our best to explain every step in an agnostic manner. We also provide numerous references if you want to dig deeper.
 
@@ -59,9 +60,7 @@ We provide a detailed requirement file that should work for Linux and MacOS.
 
 :::
 
-
-
-# Material
+**Material**
 
 The tutorial comes with some material uploaded on [Zenodo](https://doi.org/10.5281/zenodo.17416954) :
 
@@ -69,7 +68,7 @@ The tutorial comes with some material uploaded on [Zenodo](https://doi.org/10.5
 - The original dataset (which can be downloaded [here](https://www.data.gouv.fr/datasets/theses-soutenues-en-france-depuis-1985/)).
 - A clean dataset with the cleaning code.
 
-# Understanding BERTopic's philosophy <!-- mehh philosophy -->
+# Understanding BERTopic
 
 ## The BERTopic pipeline
 
@@ -443,13 +442,7 @@ For each topic the model retrieves very specific keywords that fit together such
 
 This is not a proof that our model generated interesting results, for that we need to carry further investigation of each cluster, still this is a first step towards appreciating the quality of the topic model.
 
-In this table we can see that almost half of the documents are classified as noise (topic -1). This is a normal behaviour of the clustering algorithm as it defines cluster based on spot of proximity between documents. This way, the topic model creates representations that focus on few documents to retrieve very specific keywords. The other 104 topics contain between 10 and 200 documents each, which correspond to 0.1% to 3% of the corpus. 
-<!-- AM: 
-I wrote : This is a normal behaviour of the clustering algorithm as it focuses on dense clusters first. 
-ES changed to : This is a normal behaviour of the clustering algorithm as it defines cluster based on spot of proximity between documents
-
-Is the disagreement on the formulation or the content?
--->
+In this table we can see that almost half of the documents are classified as noise (topic -1). This is a normal behaviour of the clustering algorithm as it focuses on dense areas first. This way, the topic model creates representations that focus on few documents to retrieve very specific keywords. The other 104 topics contain between 10 and 200 documents each, which correspond to 0.1% to 3% of the corpus. 
 
 It is worth noting that the more documents in a cluster, the lower the topic index is. 
 
@@ -586,7 +579,7 @@ topic_model.visualize_topics_over_time(topics_over_time, topics = [0,1,2,3])
 
 ![**XXX**](./assets/tuto_temporal_axis.png){#fig-temporal-axis}
 
-## Use the hierarchical clustering to reduce the number of topics
+## Aggregate topics
 
 :::{.callout-warning}
 
@@ -719,6 +712,11 @@ In short: quantitative methods are impractical and one should focus more on the 
 
 ### Qualitative evaluation
 
+There is no one way around qualitatively evaluate your BERTopic, however the point is 
+<!-- find reference? -->
+
+
+
 ### Quantitative evaluation
 
 In this section we introduce different metrics that can be used to evaluate your topic model. However, we mainly included it to warn you of the complexity behind evaluating a topic model and that there is no one-fit-all solution. 
@@ -727,27 +725,12 @@ In this section we introduce different metrics that can be used to evaluate your
 >
 > Response to "How to evaluate the performance of the model?" by Maarten Grootendorst [source](https://github.com/MaartenGr/BERTopic/issues/437)
 
-#### Evaluate the clustering model
+There are two types of metrics that you could use:
 
-One could choose to focus on evaluating the clustering model to tune the HDBSCAN and UMAP parameters. There exist many metrics for evaluating clustering models that you can find on the [scikit-learn website](https://scikit-learn.org/stable/modules/clustering.html#clustering-performance-evaluation). However, amid the 9 presented, 4 require a ground truth that we don't have[^11], 3 are ill-suited to HDBSCAN clustering[^12] and the two last are good metrics to be optimised.
+- Cluster metrics — ie focus on the group making. There exist a lot of metrics, but few are fit to our situation: unsupervised learning with density based algorithms. In our experience, optimising these metrics result in a sub-optimal solutions as illustrated bellow. [Read more](./techy-notes.qmd#clustering-metrics)
+- Topic representation metrics — ie focus on how relevant the keywords are. Although some metrics exist their utility is limited: good score does not necessarily align with what expert consider good topic models, and they are not good scores to optimise (Stammbach et al., 2023). [Read more](./techy-notes.qmd#coherence-metrics)
 
-Hence, we need to find metrics that are relevant to the density-based clustering models such as the DBCV Index (Moulavi et al., 2014)[^13] or the DISCO index (Beer et al., 2025).
-
-In our experience, optimising these metrics result in a sub-optimal solutions as illustrated bellow.
-
-_figure to come_
-
-We don't really recommend using clustering metrics to evaluate your topic model.
-
-#### Evaluate the topic model 
-
-Another set of metrics rely on 
-
-# Discussion on good practices
-
-## Reproducibility
-
-UMAP is non deterministic
+# Good practices
 
 Pre-computing the embeddings is a good practice as it will prevent from computing them at each run, but also because it allows you to use a broader spectrum of embedding models that could ne necessarily be used with BERTopic[^7].
 We retrieve the embeddings and the documents
@@ -760,7 +743,7 @@ embeddings = np.array(ds["embedding"]) # shape : (6500, 768)
 
 The columns in the dataset are the same as before in addition to an `embedding` column containing the embeddings of the resumes.
 
-### Save your instance locally
+## Save your instance locally
 
 For reproducibility purposes, and more generally, to save your work, BERTopic lets you do that with the `save` method. Two parameters of importance:
 
@@ -783,17 +766,7 @@ topic_model.save(
 )
 ```
 
-_à cacher - pas en première lecture -> faire une partie reproducibilité_
-
-| filename (size)                                                              | definition                                                                                                                                                                                                                        | `save_ctfidf = False` |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
-| `config.json`(~0.3 KB)                                                       | parameters of necessary to recreate the BERTopic instance                                                                                                                                                                         | ✅                    |
-| `topics.json`(~150 KB)                                                       | file containing the topic representations (keywords), a list with the topics associated to each document, topic sizes, mapper[^5] and labels                                                                                      | ✅                    |
-| `topic_embeddings.safetensors` (~350 KB) or `topic_embeddings.bin` (~450 KB) | the embeddings of the centroids of each topic.<br>shape : $(n_{topics}\times dim_{embeddings})$                                                                                                                                   | ✅                    |
-| `ctfidf_config.json` (~2.1 MB)                                               | The configuration to recreate the weighting scheme object (`ClassTfidfTransformer`) and the vectorizer model (`CountVectorizer`) including the stop words and the vocabulary with the number of occurrences for for each element. | ❌                    |
-| `ctfidf.safetensors` (~4 MB) or `ctfidf.bin` (~4 MB)                         | the c-TF-IDF representations, a topic x n-grams table.<br>shape: $(n_{topics}\times n_{n-grams})$                                                                                                                                 | ❌                    |
-
-_Note: the sizes provided correspond to a vectorizer model only counting unigrams. If you account for the bigrams, the size of the files grows exponentially._
+_For more information on the content of what's saved and the size of files._
 
 The to reload your instance you just need to use the `load` method:
 
@@ -802,6 +775,8 @@ topic_model = BERTopic.load("./bertopic-default")
 ```
 
 Saving the instance is a good practice, as we will see below, when reducing the number of topics, the instance is updated and you can't go back. Hence, we would recommend to save at least one instance — _or rerun the whole cell_.
+
+# Bibliography
 
 [^1]:The UMAP algorithm is very close to the t-SNE algorithm with better scaling capabilities. Another good option for the dimensionality reduction step is the PCA algorithm that will focus on the global structure. PCA is a better choice if you solely focus on the big picture (McInnes et al., 2018, p45).
 
