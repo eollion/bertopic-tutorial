@@ -573,7 +573,7 @@ topic_model.visualize_topics_over_time(topics_over_time, topics = [0,1,2,3])
 
 ![**XXX**](./assets/tuto_temporal_axis.png){#fig-temporal-axis}
 
-## Aggregate topics
+## Aggregate topics{#sec-aggregate-topics}
 
 :::{.callout-warning}
 
@@ -590,8 +590,6 @@ il y a une divergence entre la manière de visualiser la hierarchie et d'agrége
 
 :::
 
-In the previous section we introduced the idea that the clustering was hierarchical, meaning that we can easily aggregate small clusters into bigger ones. **Du coup askip, non c'est pas l'idée**
-<br/>
 In our case, with more than 100 topics, it is difficult to have a general idea of the main latent themes in the corpus. Looking back to the @fig-hierarchical-plot we can identify seven large branches we could reduce our topic model to.
 
 ```python
@@ -657,19 +655,19 @@ Careful though, even if the previous results let us think the topic model is coh
 
 :::
 
-## Tune parameters
+## Tune parameters{#sec-tune-parameters}
 
-In this section we try to build a consistant and robust road map for tuning your topic model. The code and extra figures are provided in the techy-notes.
+In this section, we propose to tune the 3 main parameters outlined by research papers and confirmed by our experience: the embedding model, `n_neighbors` (UMAP) and `n_components` (HDBSCAN). A table can be found in the [techy notes](./techy-notes.qmd#umap-and-hdbscan-parameter-despcription) providing descriptions for other parameters.
 
-**Assess the quality of the embedding space** (parameters tuned: embedding model)
+**1.Assess the quality of the embedding space** (parameters tuned: embedding model)
 
-The first step is to choose the embedding model as it drastically alters the results of the topic model. To do this, you can embed your documents and plot the 2D map after dimension reduction with UMAP and `n_components=2`. Then, by exploring the map, you can assess if the embedding space created places similar documents together or not.
+The first step is to choose the embedding model as it drastically alters the results of the topic model. To do this, you can embed your documents and plot the 2D map after dimension reduction with UMAP and `n_components=2`. Then, by exploring the map, you can assess if the embedding space created placed similar documents together or not.
 
 At this point you can also try different values for `n_neighbors` and `n_components`. However, be aware that the influence of UMAP parameters on the final topic model is difficult to appreciate at first glance.
 
 **Tune the granularity of the topic model** (parameters tuned: `n_neighbors` and `min_cluster_size`)
 
-Once you've chose the embedding model to use, you can change the `n_neighbors` and `min_cluster_size`. Both work
+Once you've chose the embedding model to use, you can change the `n_neighbors` and `min_cluster_size`. Both work jointly: the lower these paramters, the smaller grain and more specific the topics. 
 
 To change these parameters, one must create `UMAP` and `HDBSCAN` instances and pass them on to the `BERTopic` model:
 
@@ -725,7 +723,6 @@ We obtain the following results:
 
 ![**XXX**](./assets/2D_general.png){#fig-2D-map-tuned}
 
-
 ## Discussion on evaluating a topic model
 
 Topic model evaluation is an active domain of research that goes beyond the scope of this tutorial. We propose an overview of the methods that exist and how to quickly tell if your topic model can be used or need to be refined.
@@ -734,8 +731,85 @@ In short: quantitative methods are impractical and one should focus more on the 
 
 ### Qualitative evaluation
 
-There is no one way around qualitatively evaluate your BERTopic, however the point is 
-<!-- find reference? -->
+All along the tutorial, we have displayed many results and analysed them with the objective to answer the very question: is the topic model coherent? There is no one way around qualitatively evaluating your BERTopic, however the point is to offer some techniques we found useful and code snippet to quickly obtain key insights on your topic model performance.
+
+**Explore the 2D map**
+
+As depicted in @sec-tune-parameters, exploring the 2D map is a good way to explore the embedding space and tell if groups are made out of similar documents. It's even better if you have additional tags that can make the exploration even faster.
+
+```python
+```
+
+**Explore the merging process**
+
+When merging topics at @sec-aggregate-topics we may want to monitor what's going where. The following snippet prints out the topics that were merged into them: 
+
+```python 
+for iRow_reduced, topic_id in enumerate(topic_info_reduced["Topic"]):
+    print(topic_info_reduced.loc[iRow_reduced, "Name"].replace("_", " "))
+    og_topics_merged_to_new_topic = list(set([
+        int(og_topic) 
+        for og_topic, new_topic in zip(topics, topics_reduced) 
+        if new_topic == topic_id
+    ]))
+    for og_topic in og_topics_merged_to_new_topic:
+        print(
+            "\t - ",
+            topic_info.loc[
+                topic_info["Topic"] == og_topic,
+                "Name"
+            ]
+            .item()
+            .replace("_", " ")
+        ) 
+    print("---")
+```
+
+```bash 
+>>> ...
+>>> 5 law legal international rights
+>>>	 -  66 monetary policy inflation exchange
+>>>	 -  70 contract law contractual subsidy
+>>>	 -  46 constitutional judge legal council
+>>>	 -  22 international law european rights
+>>>	 -  89 financial law tax transactions
+>>>	 -  58 financial economic banks growth
+>>> ...
+```
+
+In this example we can confidently assess that the merge is coherent as it groups all law related topics into one.
+
+**Explore the reason why a given document was clustered in a specific group**
+
+In our example, we have 
+
+```python 
+OAI_REFS = pd.read_csv("./data/oai_codes.csv")
+DS = ds
+def get_docs_for_oai_code(oai_code : str):
+    try: 
+        oai_name = OAI_REFS.loc[OAI_REFS["code"] == oai_code, "name"].item()
+    except Exception:
+        print(f"oai code {oai_code} invalid")
+        return
+    
+    def return_name(codes):
+        if oai_code in codes: return oai_name
+        else: return "Autre"
+    classes = [return_name(codes) for codes in ds["oai_set_specs"]]
+    topics_per_class = topic_model.topics_per_class(docs, classes = classes)
+    topics_per_class = topics_per_class.loc[topics_per_class["Class"] == oai_name, :].set_index("Topic")
+    topics_name = (
+        topic_model
+        .get_topic_info()
+        .set_index("Topic")
+        ["Name"]
+    )
+    topics_per_class.loc[:,"Topic Name"] = topics_name
+    return topics_per_class.loc[topics_per_class["Class"] == oai_name, :]
+
+get_docs_for_oai_code("ddc:000")
+```
 
 ### Quantitative evaluation
 
