@@ -460,7 +460,7 @@ The topic model is not altered and keywords are not re-generated.
 :::
 
 
-## How to visualise your results
+## How to visualise your results{#sec-visualise-your-results}
 
 Visualising your topics is central in topic modelling as this is most convenient way to explore your documents and your topic model. We are going to cover some of the most basic and helpful visualisations.
 
@@ -713,12 +713,9 @@ In short: quantitative methods are impractical and one should focus more on the 
 
 All along the tutorial, we have displayed many results and analysed them with the objective to answer the very question: is the topic model coherent? There is no one way around qualitatively evaluating your BERTopic, however the point is to offer some techniques we found useful and code snippets to quickly obtain key insights on your topic model performance.
 
-**Explore the 2D map**
+**Extensively use the visualisation tools**
 
-As depicted in @sec-tune-parameters, exploring the 2D map is a good way to explore the embedding space and tell if groups are made out of similar documents. It's even better if you have additional tags that can make the exploration even faster.
-
-```python
-```
+As presented in @sec-visualise-your-results, there are many tools to visualise the results of your topic model that can help you assess the coherence of the topics through 2D representation, top n words, hierarchical and the tag distribution. 
 
 **Explore the merging process**
 
@@ -761,7 +758,34 @@ In this example we can confidently assess that the merge is coherent as it group
 
 **Explore the reason why a given document was clustered in a specific group**
 
-In our example, we have 
+The `topics_per_class` is a powerful method that retrieve top keywords found in specific documents that justify assigning it to a given cluster: 
+
+```python 
+# Select a document
+text_id = 3000
+is_my_document = [i == text_id for i in range(len(docs))]
+print(f"Doc n°{text_id}:\n{docs[text_id]}")
+
+topics_per_class = topic_model.topics_per_class(docs, classes = is_my_document)
+topics_per_class = topics_per_class.loc[topics_per_class["Class"], :].set_index("Topic")
+# Retrieve the Topic Representation for comparison
+topics_name = (topic_model.get_topic_info().set_index("Topic")["Representation"])
+topics_per_class.loc[:,"Topic Representation"] = topics_name
+print(topics_per_class.reset_index().to_markdown())
+```
+
+```bash 
+>>> Doc n°3000:
+>>> The overall objective of this thesis is to exploit a ...
+```
+
+| Topic | Words | Frequency | Class | Topic Representation |
+|---:|:---|---:|:---|:---|
+|       3 | social, annotations, multimedia, snapshot, proposed |           1 | True    | ['data', 'thesis', 'systems', 'model', 'propose', 'based', 'approach', 'proposed', 'network', 'time'] |
+
+: Table X: **XXX** {tbl-colwidths="[10, 30, 10, 20, 30]" #tbl-reason-doc-cluster}
+
+If you have additional tags, it's even more powerful as you can check the keywords for a whole class:
 
 ```python 
 OAI_REFS = pd.read_csv("./data/oai_codes.csv")
@@ -770,12 +794,15 @@ def get_docs_for_oai_code(oai_code : str):
     try: 
         oai_name = OAI_REFS.loc[OAI_REFS["code"] == oai_code, "name"].item()
     except Exception:
-        print(f"oai code {oai_code} invalid")
+        print(f"oai code {oai_code} invalid\n\nException:\n{Exception}")
         return
     
     def return_name(codes):
-        if oai_code in codes: return oai_name
-        else: return "Autre"
+        if oai_code in codes: 
+            return oai_name
+        else: 
+            return "Autre"
+
     classes = [return_name(codes) for codes in ds["oai_set_specs"]]
     topics_per_class = topic_model.topics_per_class(docs, classes = classes)
     topics_per_class = topics_per_class.loc[topics_per_class["Class"] == oai_name, :].set_index("Topic")
@@ -786,10 +813,18 @@ def get_docs_for_oai_code(oai_code : str):
         ["Name"]
     )
     topics_per_class.loc[:,"Topic Name"] = topics_name
-    return topics_per_class.loc[topics_per_class["Class"] == oai_name, :]
+    return topics_per_class.loc[topics_per_class["Class"] == oai_name, :].reset_index()
 
-get_docs_for_oai_code("ddc:000")
+get_docs_for_oai_code("ddc:300")
 ```
+
+|   Topic | Words | Frequency | Class | Topic Name |
+|---:|:---|---:|:---|:---|
+|      -1 | social, thesis, study, public, political |          98 | Sciences sociales, sociologie, anthropologie | -1_study_thesis_model_based    |
+|       0 | social, study, thesis, french, analysis  |          73 | Sciences sociales, sociologie, anthropologie | 0_study_analysis_social_thesis |
+|       3 | markov, volatility, smc, stochastic, em  |           1 | Sciences sociales, sociologie, anthropologie | 3_data_thesis_systems_model    |
+
+: Table X: **XXX** {tbl-colwidths="[10, 30, 10, 20, 30]" #tbl-reason-tags-cluster}
 
 ### Quantitative evaluation
 
