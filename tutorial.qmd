@@ -806,22 +806,96 @@ There are two types of metrics that you could use:
 
 # Good practices
 
+We list some tips to reduce computation time and facilitate reproducibility.
+
 ## Precompute your embeddings
 
-Pre-computing the embeddings is a good practice as it will prevent from computing them at each run, but also because it allows you to use a broader spectrum of embedding models that could ne necessarily be used with BERTopic[^7].
+Pre-computing the embeddings is a good practice as it will prevent from computing them at each run, but also because it allows you to use a broader spectrum of embedding models that could ne necessarily be used with BERTopic.
+<br/>
+To embed your documents, we use the [datasets](XXX) objects to bind the embeddings to the documents together: 
+
+```python
+from datasets import Dataset
+from gc import collect as gc_collect
+from sentence_transformers import SentenceTransformer
+from torch.cuda import is_available as cuda_available
+from torch.cuda import synchronize, ipc_collect, empty_cache
+
+ds = Dataset.load_from_disk("...")
+# implement your preprocess and open functions
+texts : list[str] = preprocess(ds["texts"]) 
+# Use GPU if you have one
+device = "cuda" if cuda_available() else "cpu" 
+
+sbert_model = SentenceTransformer(
+    model_name, 
+    device = device, 
+    trust_remote_code = True
+)
+
+sbert_model.max_seq_length = min(
+    sbert_model.max_seq_length,
+    np.inf # Replace with desired window size
+)
+
+try : 
+    embeddings = (
+        sbert_model
+        .encode(
+            texts, 
+            device=str(device), 
+            normalize_embeddings=True, 
+            show_progress_bar=True
+        )
+    )
+    ds = ds.add_column(
+        "embedding", 
+        [
+            embeddings[i,:].reshape(-1,) 
+            for i in range(embeddings.shape[0])
+        ]
+    )
+    ds.save_to_disk("embeddings")
+except Exception:
+    print(Exception)
+finally:
+    # Make sure to clean your GPU
+    del sbert_model, ds
+    empty_cache()
+    if cuda_available():
+        synchronize()
+        ipc_collect()
+    gc_collect()
+
+```
+
 We retrieve the embeddings and the documents
 
 ```python
 ds = load_from_disk("path/to/file")
-docs = np.array(ds[f"resumes.en"]) # Number of documents : 6500
+docs = np.array(ds[f"texts"]) # Number of documents : 6500
 embeddings = np.array(ds["embedding"]) # shape : (6500, 768)
 ```
 
-The columns in the dataset are the same as before in addition to an `embedding` column containing the embeddings of the resumes.
+## Force deterministic behaviour 
+
+The BERTopic pipeline is deterministic apart from the UMAP component. To force a deterministic:
+
+```python 
+topic_model = BERTopic(
+    ...
+    umap_model= UMAP(
+        ...
+        random_state=RANDOM_SEED
+    )
+)
+```
+
+You can also set the random state for Numpy (used by Pandas) with `np.random.seed(RANDOM_SEED)`.
 
 ## Save your instance locally
 
-For reproducibility purposes, and more generally, to save your work, BERTopic lets you do that with the `save` method. Two parameters of importance:
+For reproducibility purposes, and more generally, to save your work, BERTopic lets you do that with the `save`[^25] method. Two parameters of importance:
 
 - `serialization (str)`: must be `"safetensors"`, `"pickle"` or `"pytorch"`. We recommend to use `"safetensors"` or the `"pytorch"` format as they are broadly used in machine learning and recommended by the [BERTopic documentation](https://maartengr.github.io/BERTopic/api/bertopic.html#bertopic._bertopic.BERTopic.save)[^6].
 - `save_ctfidf (bool)` : wether to save the vectorizer configuration or not. This is the heaviest bit (see table below).
@@ -841,8 +915,6 @@ topic_model.save(
 	save_ctfidf = True
 )
 ```
-
-_For more information on the content of what's saved and the size of files._
 
 The to reload your instance you just need to use the `load` method:
 
@@ -878,8 +950,6 @@ Törnberg, A., & Törnberg, P. (2025). The aesthetics of climate misinformation�
 
 [^6]: Disclaimer: You may want to highlight these dimensions to identify hate speech, for instance. Homogeneity has to be relevant to your use case and questioning your corpus is a part of the topic modelling pipeline that should not remain overlooked.
 
-[^7]: Rule of thumb: 1 token = 3 characters
-
 [^8]: More information on [stratification in Pandas](https://proclusacademy.com/blog/stratified_sampling_pandas/)
 
 [^10]: We have seven topics because we asked the topic model to reduce the number of topics to seven.
@@ -906,4 +976,6 @@ Törnberg, A., & Törnberg, P. (2025). The aesthetics of climate misinformation�
 
 [^23]: ie the mean of the document's embedding inside a cluster.
 
-[^24]: There is a small difference in the computation of the graph and the reduce outlier that we do not clearly understand. [See issue #XXX.](XXX)
+[^24]: There is a small difference in the computation of the graph and the reduce outlier that we do not clearly understand. [See issue #XXX.](XXX).
+
+[$25]: See [techy notes](techy-notes.qmd#instances-file-size-and-content) for more information on what's saved and the size of the files.
