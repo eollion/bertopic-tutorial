@@ -5,15 +5,6 @@ toc: true
 toc-depth: 3
 ---
 
-
-:::{.callout-warning}
-
-Ne pas se focaliser que sur l'exploratoire
-
-Need to rerun it all and double check comments
-
-:::
-
 # Introduction 
 
 What are the main issues adressed in a set of documents ? Are those documents similar or discussing different issues ? What is the most important topic ? Delineating the main topics in a set of documents is a common task in social sciences; especially when working with a new corpus. Of course, identifying the topics can be done by hand. But when dealing with large corpora, this task is almost impossible; hence, for quite some time now, social scientists have used **topic modelling** techniques to quickly extract the main themes in their corpus (Asmussen & Møller, 2019), either to explore them or to attribute a label to each document to conduct further analysis.
