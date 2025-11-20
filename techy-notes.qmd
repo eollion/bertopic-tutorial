@@ -47,13 +47,11 @@ We recommend using the *"embeddings"* as using embeddings offer the richest repr
 
 | filename (size)| definition| `save_ctfidf = False` |
 | --- | --- |:---:|
-| `config.json`(~0.3 KB)                                                       | parameters of necessary to recreate the BERTopic instance                                                                                                                                                                         | ✅                    |
+| `config.json`(~0.3 KB)                                                       | parameters necessary to recreate the BERTopic instance                                                                                                                                                                         | ✅                    |
 | `topics.json`(~150 KB)                                                       | file containing the topic representations (keywords), a list with the topics associated to each document, topic sizes, mapper[^5] and labels                                                                                      | ✅                    |
 | `topic_embeddings.safetensors` (~350 KB) or `topic_embeddings.bin` (~450 KB) | the embeddings of the centroids of each topic.<br>shape : $(n_{topics}\times dim_{embeddings})$                                                                                                                                   | ✅                    |
 | `ctfidf_config.json` (~2.1 MB)                                               | The configuration to recreate the weighting scheme object (`ClassTfidfTransformer`) and the vectorizer model (`CountVectorizer`) including the stop words and the vocabulary with the number of occurrences for for each element. | ❌                    |
 | `ctfidf.safetensors` (~4 MB) or `ctfidf.bin` (~4 MB)                         | the c-TF-IDF representations, a topic x n-grams table.<br>shape: $(n_{topics}\times n_{n-grams})$                                                                                                                                 | ❌                    |
-
-: Table X: **XXX** {#tbl-save-file-sizes tbl-colwidths="[30, 50, 20]"}
 
 _Note: the sizes provided correspond to a vectorizer model only counting unigrams. If you account for the bigrams, the size of the files grows exponentially._
 

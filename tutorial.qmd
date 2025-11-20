@@ -124,17 +124,24 @@ The `Topic` column lists the topic IDs, the `Count` column lists the number of e
 In reality, this example would not run because there are not enough documents! Let's have a look at what one can expect from BERTopic, working with a real dataset: the abstracts of all the theses defended in France since 2010. After carefully setting the parameters and verifying the topic model's quality, we obtain the following results:
 
 
-| Topic | Count | Name       | Representation |
-| ----- | ----- | ---------- | -------------- |
-| 0     | 500   | 0\_**XXX** | **XXXX**       |
-| 1     | 500   | 1\_**XXX** | **XXXX**       |
-| 2     | 500   | 2\_**XXX** | **XXXX**       |
+|   Topic |   Count | Name                                 | Representation                                                                     |
+|---:|---:|:---|:---|
+|       0 |  1601 | Physique et Mathématiques appliqués      | model study material property method phase surface field process thesis            |
+|       1 |  1275 | Biologie et Santé            | cell gene protein study expression role species response involve mouse             |
+|       2 |  1156 | Sciences politiques, droit et géographie             | law legal study french language international teacher analysis public social       |
+|       3 |  1030 | Sciences des données         | propose datum model method base approach network thesis application algorithm      |
+|       4 |  631  | Histoire et Histoire de l'art     | literary century study writing art time author history narrative period            |
+|       5 |  202  | Mathématiques            | graph prove study space class thesis chapter theorem random theory                 |
+|       6 |  328  | Psychologie et Santé de l'enfant         | study child patient infant adolescent disorder preterm social age intervention     |
+|       7 |  105  | Économie      | monetary bank policy economic chapter financial country banking credit growth      |
+|       8 |  172  | Chimie et nanotechnologies | emulsion hydrogel microgels casein surface collagen property droplet quercetin gel |
+
 
 : Topic information of the french theses after tuning the topic model 
 {#tbl-final-example tbl-colwidths="[10, 20, 20,50]"}
 
 
-![2D plot of the french theses after tuning the topic model](./assets/tuto_2d_plot.png){#fig-2d-plot-intro}
+![2D plot of the french theses after tuning the topic model](./assets/2D_final.png){#fig-2d-plot-intro}
 
 ## Breaking down the process
 
@@ -251,13 +258,13 @@ It is crucial to stress that the preprocessing step is **the most important step
 
 It could be tempting to shove millions of different documents from different sources in a topic model and see what comes out. However, to make sure that the groups will represent topics, one must be sure that your documents are similar in formality, tone, length, density of information etc... If your corpus is too heterogenous, the topic model can highlight theses differences and you will lose sight of meaningful latent topics[^6].
 
-In our case, as we analyse theses resumes which are quite standardised, the corpus should be homogenous enough for the topic model to pick up topics and not other semantic dimensions.
+In our case, as we analyse theses abstracts which are quite standardised, the corpus should be homogenous enough for the topic model to pick up topics and not other semantic dimensions.
 
 **Are my documents in the right language?**
 
 Most of the time, language models are trained in a single language. Some models are said multi-lingual and accept texts in more than one language. However, in our experience, working with documents in different languages generates poor topics as the language shift holds for the most salient difference and each language is clustered by itself. We recommend translating your documents in a single language beforehand.
 
-In our case, the data curation allowed us to extract theses where both the english and french resumes were provided and we will work with resumes in each language separately.
+In our case, the data curation allowed us to extract theses where both the english and french abstracts were provided and we will work with abstracts in each language separately.
 
 **How long are my documents?**
 
@@ -284,8 +291,8 @@ The dataset contains the following columns :
 - `CI`: Custom index, values are `CI-XXXX`, with `XXXX` ranging from 0 to 164,378
 - `year`: the year of the defence, values are integers ranging from 2010 to 2022
 - `oai_set_specs`: the oai code, each code looks like `ddc:XXX`, for instance `ddc:300` refers to `Sciences sociales, sociologie, anthropologie`.
-- `resumes.en` and `resumes.fr`: the abstract of the phd dissertation, respectively in english and french. We are sure that every row contains a valid resume in the right language thanks to the data curation.
-- `titres.en` and `titres.fr`: the titles of the thesis, respectively in english and french. Only 5% of the rows do not have a valid title (french or english). The language of the titles has not been checked because it will only be used to check the qualitative validity of topic model. [Refer to the notebook to see the code.](google.com)
+- `resumes.en` and `resumes.fr`: the abstract of the phd dissertation, respectively in english and french. We are sure that every row contains a valid abstract in the right language thanks to the data curation.
+- `titres.en` and `titres.fr`: the titles of the PhD dissertation, respectively in english and french. Only 5% of the rows do not have a valid title (french or english). The language of the titles has not been checked because it will only be used to check the qualitative validity of topic model. [Refer to the notebook to see the code.](google.com)
 - `topics.en` and `topics.fr`: the aggregated topics provided by the author. Only 5% of the rows do not have valid topics (french or english). The language of the topics has not been checked because they will only be used to check the qualitative validity of topic model.
 
 Let's take some time to check if our documents fit inside the context window.
@@ -321,9 +328,9 @@ df_raw.loc[:,["resumes.en.len", "resumes.fr.len"]].describe()
 | mean | 1777       | 1984       |
 | std  | 735        | 802        |
 
-: Descriptive statistics of the length of the resumes in english and in french {tbl-colwidths="[20,40,40]"}
+: Descriptive statistics of the length of the abstracts in english and in french {tbl-colwidths="[20,40,40]"}
 
-With these statistics, we see that we can rule out using `sentence-transformers/all-MiniLM-L6-v2` because it's context window is too narrow. By keeping resumes between 1000 and 4000 characters (ie between 300 and 1300 tokens[^7]) we can keep most of the dataset (89%) while maintaining a reasonable computation time.
+With these statistics, we see that we can rule out using `sentence-transformers/all-MiniLM-L6-v2` because it's context window is too narrow. By keeping abstracts between 1000 and 4000 characters (ie between 300 and 1300 tokens[^7]) we can keep most of the dataset (89%) while maintaining a reasonable computation time.
 
 ```python
 valid_index = np.logical_and.reduce([
@@ -574,7 +581,7 @@ topic_model.visualize_topics_over_time(topics_over_time, topics = [0,1,2,3])
 
 ## Aggregate topics{#sec-aggregate-topics}
 
-To aggregate topics, the algorithm proposed is to use the topic embedding (the mean of the document's embedding inside a cluster), compute the cosine similarity matrix and use the agglomerative clustering algorithm described [here](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html) to aggregate the topics. Once performed, all the documents are moved into a new group and keywords are re-generated.
+To aggregate topics, the algorithm proposed is to use the topic embedding (the mean of the document's embedding inside a cluster), compute the cosine similarity[^26] matrix and use the agglomerative clustering algorithm described [here](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html) to aggregate the topics. Once performed, all the documents are moved into a new group and keywords are re-generated.
 
 With more than 100 topics, it is difficult to have a general idea of the main groups in the corpus. Looking back to the @fig-hierarchical-plot[^24] we can identify seven large branches we could reduce our topic model to.
 
@@ -844,11 +851,42 @@ There are two types of metrics that you could use:
 
 Now that you have a good understanding of BERTopic, and you started to experiment with it, you may want more practical advices. Here, we list some tips to reduce computation time and facilitate reproducibility.
 
+## Save your instance locally
+
+For reproducibility purposes, and more generally, it is important to save your work, BERTopic lets you do that with the `save`[^25] method. Two parameters of importance:
+
+- `serialization (str)`: must be `"safetensors"`, `"pickle"` or `"pytorch"`. We recommend to use `"safetensors"` or the `"pytorch"` format as they are broadly used in machine learning and recommended by the [BERTopic documentation](https://maartengr.github.io/BERTopic/api/bertopic.html#bertopic._bertopic.BERTopic.save)[^6].
+- `save_ctfidf (bool)` : wether to save the vectorizer configuration or not. This is the heaviest bit (see table below).
+
+```python
+# ~ 500 KB
+topic_model.save(
+	path = "./bertopic-default",
+	serialization = "safetensors",
+	save_ctfidf = False
+)
+
+# ~ 6MB
+topic_model.save(
+	path = "./bertopic-default-with-ctfidf",
+	serialization = "safetensors",
+	save_ctfidf = True
+)
+```
+
+The to reload your instance you just need to use the `load` method:
+
+```python
+topic_model = BERTopic.load("./bertopic-default")
+```
+
+Saving the instance is a good practice, as we will see below, when reducing the number of topics, the instance is updated and you can't go back. Hence, we would recommend to save at least one instance — _or rerun the whole cell_.
+
 ## Precompute your embeddings
 
 Pre-computing the embeddings is a good practice as it will prevent from computing them at each run, but also because it allows you to use a broader spectrum of embedding models. This comes handy when you want to test different parameters of clustering and cluster representation. Moreover, saving BERTopics models does not save the embeddings, so it is good practice to manage them separately.
 
-To embed our documents, we use the [datasets](https://huggingface.co/docs/datasets/index) objects to bind the embeddings to the documents together: 
+To embed our documents, we use the [datasets](https://huggingface.co/docs/datasets/index) objects to manage the data and the [sentence-bert](https://www.sbert.net) (**SBERT**) library to embed the documents. The process is very straightforward, you need to open your file and preprocess your texts. Then after loading the model 
 
 ```python
 from datasets import Dataset
@@ -884,13 +922,7 @@ try :
             show_progress_bar=True
         )
     )
-    ds = ds.add_column(
-        "embedding", 
-        [
-            embeddings[i,:].reshape(-1,) 
-            for i in range(embeddings.shape[0])
-        ]
-    )
+    ds = ds.add_column("embedding", list(embeddings))
     ds.save_to_disk("embeddings")
 except Exception:
     print(Exception)
@@ -929,36 +961,9 @@ topic_model = BERTopic(
 
 You can also set the random state for Numpy (used by Pandas) with `np.random.seed(RANDOM_SEED)`.
 
-## Save your instance locally
+# Conclusion
 
-For reproducibility purposes, and more generally, to save your work, BERTopic lets you do that with the `save`[^25] method. Two parameters of importance:
-
-- `serialization (str)`: must be `"safetensors"`, `"pickle"` or `"pytorch"`. We recommend to use `"safetensors"` or the `"pytorch"` format as they are broadly used in machine learning and recommended by the [BERTopic documentation](https://maartengr.github.io/BERTopic/api/bertopic.html#bertopic._bertopic.BERTopic.save)[^6].
-- `save_ctfidf (bool)` : wether to save the vectorizer configuration or not. This is the heaviest bit (see table below).
-
-```python
-# ~ 500 KB
-topic_model.save(
-	path = "./bertopic-default",
-	serialization = "safetensors",
-	save_ctfidf = False
-)
-
-# ~ 6MB
-topic_model.save(
-	path = "./bertopic-default-with-ctfidf",
-	serialization = "safetensors",
-	save_ctfidf = True
-)
-```
-
-The to reload your instance you just need to use the `load` method:
-
-```python
-topic_model = BERTopic.load("./bertopic-default")
-```
-
-Saving the instance is a good practice, as we will see below, when reducing the number of topics, the instance is updated and you can't go back. Hence, we would recommend to save at least one instance — _or rerun the whole cell_.
+In this tutorial we have explained how the BERTopic pipeline leverages encoders to create a meaningful topic model
 
 # Bibliography
 
@@ -1003,3 +1008,5 @@ Törnberg, A., & Törnberg, P. (2025). The aesthetics of climate misinformation�
 [^24]: There is a small difference in the computation of the graph and the reduce outlier that we do not clearly understand. [See Discussion #2453](https://github.com/MaartenGr/BERTopic/discussions/2453).
 
 [^25]: See [techy notes](techy-notes.qmd#instances-file-size-and-content) for more information on what's saved and the size of the files.
+
+[^26]: Cosine similarity is a metric bound between 0 and 1 and is a proxy for the semantic distance between two words.

@@ -5,3 +5,4 @@ data/
 /.quarto/
 /_site/
 outputs*
+__*
