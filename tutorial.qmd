@@ -277,7 +277,7 @@ In our case, the topic of the dissertations will be described throughout the abs
 
 Also, as introduced before, each embedding model has a context window, meaning that long documents will be truncated. One must make sure that the length of the documents in their corpus is smaller than the model's context window. If the context window is too small consider changing embedding model. Careful though, larger context window means longer computation time and greater computation resources required to run the model.
 
-We will confirm the length of our documents before calling the embedding model.
+We will confirm the length of our documents before using the embedding model.
 
 ## Let's code!
 
@@ -333,7 +333,7 @@ df_raw.loc[:,["resumes.en.len", "resumes.fr.len"]].describe()
 
 : Descriptive statistics of the length of the abstracts in english and in french {tbl-colwidths="[20,40,40]"}
 
-With these statistics, we see that we can rule out using `sentence-transformers/all-MiniLM-L6-v2` because it's context window is too narrow. By keeping abstracts between 1000 and 4000 characters (ie between 300 and 1300 tokens[^7]) we can keep most of the dataset (89%) while maintaining a reasonable computation time.
+With these statistics, we see that we can rule out using `sentence-transformers/all-MiniLM-L6-v2` because it's context window is too narrow. By keeping abstracts between 1000 and 4000 characters (ie between 300 and 1300 tokens[^7]) we can retain most of the dataset (89%) while maintaining a reasonable computation time.
 
 ```python
 valid_index = np.logical_and.reduce([
@@ -386,7 +386,9 @@ topic_model = BERTopic(
 topic_model.fit(documents=docs)
 ```
 
-This snippet of code takes a long time to run (>10 mins) as each element must be embedded first. To avoid unnecessary computation time, we have embedded 6500 elements with several models for the French and English abstracts that you can download from [Zenodo](https://doi.org/10.5281/zenodo.17416954). The code changes as such: 
+This snippet of code takes a long time to run (>10 mins), as each element must be embedded first. 
+
+To avoid unnecessary computation time, we have done this embedding, so you can download 6500 elements with several models for the French and English abstracts that you can download from [Zenodo](https://doi.org/10.5281/zenodo.17416954). The code changes as such: 
 
 ```python
 language = "english" # or "french"
@@ -439,13 +441,13 @@ topic_info
 The "Representation" column provides the keywords for each topic. We can see that the keywords retrieved for the noise cluster are very generic: "study", "thesis", "model", "analysis", "approach" and do not convey any meaningful information other than the fact that all documents are academic documents.
 <br/>
 
-For each topic the model identifies apparently consistent keywords : 
+For  other topics, the model identifies apparently consistent keywords : 
 
 - 'mechanical', 'numerical', 'model', 'finite', 'element': this cluster may be grouping dissertations related to numerical simulation in mechanics using the finite element method.
 - ‘cells’, ‘cancer’, ‘tumor’, ‘immune’, ‘patients’: this cluster may be grouping dissertations related to cancer and cures.
 - ‘building’, ‘ventilation’, ‘heat’, ‘cooling’: this cluster may be grouping dissertations related to the thermodynamics of buildings.
 
-This is not a proof that our model generated interesting results, for that we need to carry further investigation of each cluster, still this is a first step towards appreciating the quality of the topic model.
+This is not a proof that our model generated interesting results, for that we need to carry further investigation of each cluster. Still this is a first step towards assessing the quality of the topic model.
 
 In this table we can see that almost half of the documents are classified as noise (topic -1). This is a normal behaviour of the clustering algorithm as it focuses on dense areas first. This way, the topic model creates representations that focus fewer documents to retrieve very specific keywords. The other 104 topics contain between 10 and 200 documents each, which correspond to 0.1% to 3% of the corpus. 
 
@@ -524,7 +526,7 @@ fig = topic_model.visualize_hierarchy()
 
 ![Hierarchical graph of the french dissertations for a basic topic model](./assets/tuto_hierarchical.png){#fig-hierarchical-plot}
 
-At the very top of this graph, we can see the green branches related to laws and international rights, very close to contract legislation. This is a good sign that these three branches merge together and that we dont find legislation-related keywords anywhere else in the three.
+At the very top of this graph, we can see the green branches related to laws and international law, very close to contract law. This is a sign that these three branches merge together and that we dont find legislation-related keywords anywhere else in the three.
 
 ### Additional visualisations
 
@@ -647,7 +649,7 @@ Finally, the 7th topic still seem very specific, even after reducing outliers, t
 
 ## Tune parameters{#sec-tune-parameters}
 
-A diversity of parameters can be used to tune the topic model. In this section, we propose to tune the 3 most useful parameters outlined in the litterature : the embedding model, `n_neighbors` (UMAP) and `n_components` (HDBSCAN). A table can be found in the [techy notes](./techy-notes.qmd#umap-and-hdbscan-parameter-despcription) providing descriptions for other parameters.
+A diversity of parameters can be used to tune the topic model. In this section, we propose to tune the 3 most useful parameters outlined in the litterature: the embedding model, `n_neighbors` (UMAP) and `n_components` (HDBSCAN). A table can be found in the [techy notes](./techy-notes.qmd#umap-and-hdbscan-parameter-despcription) providing descriptions for other parameters.
 
 **1. Assess the quality of the text representations** (parameters tuned: embedding model)
 
@@ -657,7 +659,7 @@ At this point you can also try different values for `n_neighbors` and `n_compone
 
 **Tune the granularity of the topic model** (parameters tuned: `n_neighbors` and `min_cluster_size`)
 
-Once you've chosen an embedding model, you can change the `n_neighbors` and `min_cluster_size`. Both work jointly: the lower these paramters, the smaller grain and more specific the topics. 
+Once you've chosen an embedding model, you can change the `n_neighbors` and `min_cluster_size`. Both work jointly: the lower these parameters, the smaller the grain and the more specific the topics. 
 
 To change these parameters, one must explicitly declare `UMAP` and `HDBSCAN` objects and pass them on to the `BERTopic` model:
 
@@ -721,7 +723,7 @@ In short: quantitative methods are impractical and one should focus more on the 
 
 ### Qualitative evaluation
 
-All along the tutorial, we have displayed many results and analysed them with the objective to answer the very question: is the topic model coherent? There is no one way around qualitatively evaluating your BERTopic, however the point is to offer some techniques we found useful and code snippets to quickly obtain key insights on your topic model performance.
+Throughout this tutorial, we have displayed many results and analysed them with the objective to answer the very question: is the topic model consistent? There is no one way around qualitatively evaluating your BERTopic, however the point is to offer some techniques we found useful and code snippets to quickly obtain key insights on your topic model performance.
 
 **Extensively use the visualisation tools**
 
@@ -838,15 +840,15 @@ get_docs_for_oai_code("ddc:300")
 
 ### Quantitative evaluation
 
-In this section we introduce different metrics that can be used to evaluate your topic model. However, we mainly included it to warn you of the complexity behind evaluating a topic model and that there is no one-fit-all solution. 
+In this section we introduce different metrics that can be used to evaluate your topic model. However, we mainly included it to warn you of the complexity behind evaluating a topic model and that there is no one-size-fit-all solution. 
 
-> First, choosing the coherence score by itself can have a large influence on the difference in performance you will find between models. For example, NPMI and UCI may each lead to quite different values. Second, the coherence score only tells a part of the story. Perhaps your purpose is more classification than having the most coherent words or perhaps you want as diverse topics as possible. These use cases require vastly different evaluation metrics to be used.
+> First, choosing the coherence score by itself can have a large influence on the difference in performance you will find between models. For example, NPMI and UCI may each lead to quite different values. Second, the coherence score only tells a part of the story. Perhaps your purpose is more classification than having the most coherent words or perhaps you want as diverse topics as possible [[EO: comprends pas cette phrase]]. These use cases require vastly different evaluation metrics to be used.
 >
 > Response to "How to evaluate the performance of the model?" by Maarten Grootendorst [source](https://github.com/MaartenGr/BERTopic/issues/437)
 
 There are two types of metrics that you could use:
 
-- Cluster metrics — ie focus on the group making. There exist a lot of metrics, but few are fit to our situation: unsupervised learning with density based algorithms. In our experience, optimising these metrics result in a sub-optimal solutions as illustrated bellow. [Read more](./techy-notes.qmd#clustering-metrics)
+- Cluster metrics — ie focus on the group-making. There exist a lot of metrics, but few are fit to our situation: unsupervised learning with density based algorithms. In our experience, optimising these metrics result in a sub-optimal solutions as illustrated bellow. [Read more](./techy-notes.qmd#clustering-metrics)
 - Topic representation metrics — ie focus on how relevant the keywords are. Although some metrics exist their utility is limited: good score does not necessarily align with what expert consider good topic models, and they are not good scores to optimise (Stammbach et al., 2023). [Read more](./techy-notes.qmd#coherence-metrics)
 
 
