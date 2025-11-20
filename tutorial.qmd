@@ -7,7 +7,7 @@ toc-depth: 3
 
 # Introduction 
 
-What are the main issues adressed in a set of documents ? Are those documents similar or discussing different issues ? What is the most important topic ? Delineating the main topics in a set of documents is a common task in social sciences; especially when working with a new corpus. Of course, identifying the topics can be done by hand. But when dealing with large corpora, this task is almost impossible without some kind of automation; hence, for quite some time now, social scientists have used **topic modelling** techniques to quickly extract the main themes in their corpus (Asmussen & Møller, 2019), either to explore them or to attribute a label to each document to conduct further analysis.
+What are the main issues adressed in a set of documents ? Are those documents similar or discussing different issues POUET ? What is the most important topic ? Delineating the main topics in a set of documents is a common task in social sciences; especially when working with a new corpus. Of course, identifying the topics can be done by hand. But when dealing with large corpora, this task is almost impossible without some kind of automation; hence, for quite some time now, social scientists have used **topic modelling** techniques to quickly extract the main themes in their corpus (Asmussen & Møller, 2019), either to explore them or to attribute a label to each document to conduct further analysis.
 
 > **Topic modelling** is a natural language processing task that extracts latent topics structuring a corpora.<br/>
 > _For instance, Jockers & Mimno (2013) extracted broad themes in the English literature from the 19th century._ 
