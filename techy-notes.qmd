@@ -28,7 +28,7 @@ We recommend using the *"embeddings"* as using embeddings offer the richest repr
 
 |Parameter  | Description | Increase | Decrease |Recommendations
 |---:|:--- |:--- |:---|:---|
-|⭐️`n_neighbors`<br/>*default 15*|This parameter defines what's considered as "close". [^3]|Focus on the global structure|Focus on local structures||
+|⭐️`n_neighbors`<br/>*default 15*|This parameter defines what's considered as "close". [^3]|Focus on the global structure (broad topics)|Focus on local structures (very specific topics)|Start with a rather large value and reduce incrementally until obtaining the desired level of topics specificity |
 |`min_dist`<br/>*default 0.0*|This parameter is "essentially aesthetic", low values will create denser clusters|||Keep `min_dist=0.0`|
 |`n_components`<br/>*default 5*|Defines the number of dimensions of the output space.|Maintain richer representations.|Flatten the representations.|Start with `n_components=5`.<br/>Increase when the topic model does not grasp semantic subtelties<br/>Decrease when the topic model focuses on non-essential disparities of your corpus.| 
 |`metrics`<br/>*default cosine*|This parameter defines the metric used to quantify the similarity between 2 vectors|||For NLP tasks, we use the cosine metric|
