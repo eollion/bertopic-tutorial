@@ -972,9 +972,9 @@ In this tutorial we have explained how to use BERTopic a Python library that fac
 
 The most important steps to follow to obtain a coherent topic model are : 
 
-- Define what you want out of your topic model and preprocess your texts accordingly.
-- Carefully choose your topic model and assess the quality of the embedding space.
-- Tune your parameters in order to get a topic model with the desired granularity.
+- Define what you want out of your topic model and preprocess your texts accordingly;
+- Carefully choose your topic model and assess the quality of the embedding space;
+- Tune your parameters in order to get a topic model with the desired granularity;
 - Visualise your results and assess the quality of your topics and the coherence of the documents within a given topic.
 
 # Bibliography
