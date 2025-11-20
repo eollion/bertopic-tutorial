@@ -947,7 +947,7 @@ embeddings = np.array(ds["embedding"]) # shape : (6500, 768)
 
 ## Force deterministic behaviour 
 
-The BERTopic pipeline is deterministic apart from the UMAP component. To force a deterministic:
+The BERTopic pipeline is deterministic apart from the UMAP component. To force a deterministic behaviour: 
 
 ```python 
 topic_model = BERTopic(
@@ -963,7 +963,13 @@ You can also set the random state for Numpy (used by Pandas) with `np.random.see
 
 # Conclusion
 
-In this tutorial we have explained how the BERTopic pipeline leverages encoders to create a meaningful topic model
+In this tutorial we have explained how to use BERTopic a Python library that facilitates the exploration of a corpus of text. The pipeline leverages several NLP tools such as encoder models and clustering techniques to generate groups of similar texts, as well as bag-of-words techniques to retrieve insightful keywords. We have demonstrated how to create a topic model, tune it and visualise the results. We have also provided ready-to-use techniques to qualitatively evaluate your topic model. 
+
+The most important steps to follow to obtain a coherent topic model are : 
+
+- Define what you want out of your topic model and preprocess your texts accordingly.
+- Carefully choose your topic model and assess the quality of the embedding space.
+- Visualise your results and assess the quality of your topics and the coherence of the documents within a given topic 
 
 # Bibliography
 
