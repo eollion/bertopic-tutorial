@@ -364,7 +364,7 @@ df_stratified.to_csv("./data/theses-soutenues-curated-stratified.csv", index=Fal
 
 The resulting stratified table contains 6500 rows.
 
-## Create a BERTopic instance, fit and transform {#sec-create-instance}
+## Create a BERTopic, fit and transform {#sec-create-instance}
 
 To create a `topic_model` object we need to create a `BERTopic` object and define some parameters. For now, we will not change the default parameters of the clustering model (`hdbscan_model`) or the dimension reduction model (`umap_model`). We will however define the language of the corpus as well as the vectorizer model in order to remove all stopwords and retrieve meaningful topics. Then, one must use the `fit` method to fit the topic model to the corpus.
 
